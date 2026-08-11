@@ -27,8 +27,9 @@ jobs:
       
       - name: Sinyal takip scriptini çalıştır
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          EMAIL_USER: ${{ secrets.bykusfinans@gmail.com }}
+          EMAIL_APP_PASSWORD: ${{ secrets.eiva bmmr mmvh blwk }}
+          EMAIL_TO: ${{ secrets.bykusfinans@gmail.com }}
         run: python bist_takip.py
       
       - name: Sinyal kaydını commit et
