@@ -2,7 +2,6 @@ name: BIST 100 Sinyal Takip
 
 on:
   schedule:
-    # Türkiye saati: 09:00, 13:00, 17:00, 21:00 (UTC -3)
     - cron: '0 6,10,14,18 * * *'
   workflow_dispatch:
 
