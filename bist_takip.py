@@ -3,36 +3,40 @@ import pandas as pd
 import time
 import os
 import json
-import requests
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 import warnings
 warnings.filterwarnings('ignore')
 
 # ═══════════════════════════════════════════════════════════════
-# TELEGRAM AYARLARI
+# E-POSTA AYARLARI (GitHub Secrets'ten okunur)
 # ═══════════════════════════════════════════════════════════════
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+EMAIL_USER = os.environ.get("EMAIL_USER", "")
+EMAIL_APP_PASSWORD = os.environ.get("EMAIL_APP_PASSWORD", "")
+EMAIL_TO = os.environ.get("EMAIL_TO", EMAIL_USER)
 
-def telegram_bildir(mesaj):
-    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
-        print("⚠️ Telegram ayarlanmamış, bildirim atlanıyor.")
+def email_gonder(konu, icerik_html):
+    if not EMAIL_USER or not EMAIL_APP_PASSWORD:
+        print("⚠️ E-posta ayarları eksik, bildirim atlanıyor.")
         return
-    
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    payload = {
-        "chat_id": TELEGRAM_CHAT_ID,
-        "text": mesaj,
-        "parse_mode": "HTML"
-    }
+
     try:
-        response = requests.post(url, json=payload, timeout=15)
-        if response.status_code == 200:
-            print("✅ Telegram bildirimi gönderildi")
-        else:
-            print(f"❌ Telegram hatası: {response.text}")
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = konu
+        msg['From'] = EMAIL_USER
+        msg['To'] = EMAIL_TO
+
+        msg.attach(MIMEText(icerik_html, 'html', 'utf-8'))
+
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(EMAIL_USER, EMAIL_APP_PASSWORD)
+            server.sendmail(EMAIL_USER, EMAIL_TO, msg.as_string())
+        
+        print("✅ E-posta başarıyla gönderildi!")
     except Exception as e:
-        print(f"❌ Telegram bağlantı hatası: {e}")
+        print(f"❌ E-posta gönderim hatası: {e}")
 
 # ═══════════════════════════════════════════════════════════════
 # BIST 100 HİSSELERİ
@@ -121,19 +125,19 @@ for hisse in hisseler:
         sma50 = float(son['SMA50'])
 
         if canli_fiyat > ema9 > ema21 > sma50:
-            sinyal = "🟢 GÜÇLÜ AL"
+            sinyal = "GÜÇLÜ AL"
         elif canli_fiyat > ema9 > ema21:
-            sinyal = "🟢 AL"
+            sinyal = "AL"
         elif canli_fiyat < ema9 < ema21 < sma50:
-            sinyal = "🔴 GÜÇLÜ SAT"
+            sinyal = "GÜÇLÜ SAT"
         elif canli_fiyat < ema9 < ema21:
-            sinyal = "🔴 SAT"
+            sinyal = "SAT"
         elif ema9 > ema21 and canli_fiyat > ema9:
-            sinyal = "🟡 YUKARI"
+            sinyal = "YUKARI"
         elif ema9 < ema21 and canli_fiyat < ema9:
-            sinyal = "🟡 AŞAĞI"
+            sinyal = "AŞAĞI"
         else:
-            sinyal = "⚪ NÖTR"
+            sinyal = "NÖTR"
 
         hisse_kodu = hisse.replace('.IS', '')
         yeni_sinyaller[hisse_kodu] = sinyal
@@ -171,20 +175,47 @@ print("=" * 80)
 print(f"Toplam: {len(sonuclar)} / {len(hisseler)} hisse başarıyla çekildi.")
 
 # ═══════════════════════════════════════════════════════════════
-# SİNYAL DEĞİŞİM BİLDİRİMLERİ
+# SİNYAL DEĞİŞİMİ VARSA E-POSTA GÖNDER
 # ═══════════════════════════════════════════════════════════════
 if degisen_hisseler:
     print(f"\n🔔 {len(degisen_hisseler)} hisste sinyal değişimi tespit edildi!")
     
-    mesaj = f"📊 <b>BIST 100 Sinyal Değişimi</b>\n"
-    mesaj += f"⏰ {datetime.now().strftime('%d.%m.%Y %H:%M')}\n"
-    mesaj += "─" * 30 + "\n"
+    html = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+        <h2 style="color: #1F4E78;">📊 BIST 100 Sinyal Değişimi</h2>
+        <p><strong>Tarih:</strong> {datetime.now().strftime('%d.%m.%Y %H:%M')}</p>
+        <hr>
+        <table style="border-collapse: collapse; width: 100%;">
+            <tr style="background: #1F4E78; color: white;">
+                <th style="padding: 10px; border: 1px solid #ddd;">Hisse</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Fiyat</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Önceki Sinyal</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Yeni Sinyal</th>
+            </tr>
+    """
+    
+    renkler = {
+        "GÜÇLÜ AL": "#C6EFCE", "AL": "#E2EFDA",
+        "GÜÇLÜ SAT": "#FFC7CE", "SAT": "#FFEB9C",
+        "YUKARI": "#FFF2CC", "AŞAĞI": "#FFF2CC", "NÖTR": "#F2F2F2"
+    }
     
     for d in degisen_hisseler:
-        mesaj += f"\n<b>{d['hisse']}</b> | ₺{d['fiyat']}\n"
-        mesaj += f"   {d['eski']} → {d['yeni']}\n"
+        eski_renk = renkler.get(d['eski'], "#F2F2F2")
+        yeni_renk = renkler.get(d['yeni'], "#F2F2F2")
+        html += f"""
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">{d['hisse']}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">₺{d['fiyat']}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; background: {eski_renk};">{d['eski']}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; background: {yeni_renk}; font-weight: bold;">{d['yeni']}</td>
+            </tr>
+        """
     
-    telegram_bildir(mesaj)
+    html += "</table></body></html>"
+    
+    email_gonder("🔔 BIST 100 Sinyal Değişimi!", html)
 else:
     print("\n✅ Sinyal değişimi yok.")
 
@@ -196,21 +227,36 @@ with open(JSON_DOSYA, 'w', encoding='utf-8') as f:
 print(f"💾 Yeni sinyaller kaydedildi: {JSON_DOSYA}")
 
 # ═══════════════════════════════════════════════════════════════
-# GÜNCEL ÖZET (Her çalışmada gönder)
+# GÜNLÜK ÖZET E-POSTASI (Her çalışmada)
 # ═══════════════════════════════════════════════════════════════
 if sonuclar:
     df_sonuc = pd.DataFrame(sonuclar)
     print("\n📊 ÖZET TABLO:")
     print(df_sonuc[['Hisse','Canli_Fiyat','EMA9','EMA21','SMA50','Sinyal']].to_string(index=False))
     
-    guclu_al = df_sonuc[df_sonuc['Sinyal'] == '🟢 GÜÇLÜ AL']['Hisse'].tolist()
-    guclu_sat = df_sonuc[df_sonuc['Sinyal'] == '🔴 GÜÇLÜ SAT']['Hisse'].tolist()
+    guclu_al = df_sonuc[df_sonuc['Sinyal'] == 'GÜÇLÜ AL'][['Hisse','Canli_Fiyat']].values.tolist()
+    guclu_sat = df_sonuc[df_sonuc['Sinyal'] == 'GÜÇLÜ SAT'][['Hisse','Canli_Fiyat']].values.tolist()
     
-    if guclu_al or guclu_sat:
-        ozet_mesaj = f"📈 <b>BIST 100 Güncel Durum</b>\n"
-        ozet_mesaj += f"⏰ {datetime.now().strftime('%d.%m.%Y %H:%M')}\n\n"
-        if guclu_al:
-            ozet_mesaj += f"🟢 <b>GÜÇLÜ AL ({len(guclu_al)}):</b>\n" + ", ".join(guclu_al) + "\n\n"
-        if guclu_sat:
-            ozet_mesaj += f"🔴 <b>GÜÇLÜ SAT ({len(guclu_sat)}):</b>\n" + ", ".join(guclu_sat) + "\n"
-        telegram_bildir(ozet_mesaj)
+    html_ozet = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif;">
+        <h2 style="color: #1F4E78;">📈 BIST 100 Günlük Özet</h2>
+        <p>{datetime.now().strftime('%d.%m.%Y %H:%M')}</p>
+        <hr>
+        <h3 style="color: #006100;">🟢 GÜÇLÜ AL ({len(guclu_al)})</h3>
+        <ul>
+    """
+    for h, fiyat in guclu_al:
+        html_ozet += f"<li><b>{h}</b> — ₺{fiyat}</li>"
+    
+    html_ozet += f"""
+        </ul>
+        <h3 style="color: #9C0006;">🔴 GÜÇLÜ SAT ({len(guclu_sat)})</h3>
+        <ul>
+    """
+    for h, fiyat in guclu_sat:
+        html_ozet += f"<li><b>{h}</b> — ₺{fiyat}</li>"
+    
+    html_ozet += "</ul></body></html>"
+    
+    email_gonder("📈 BIST 100 Günlük Özet", html_ozet)
