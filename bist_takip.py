@@ -149,7 +149,10 @@ for hisse in hisseler:
                     'hisse': hisse_kodu,
                     'eski': eski_sinyal,
                     'yeni': sinyal,
-                    'fiyat': round(canli_fiyat, 2)
+                    'fiyat': round(canli_fiyat, 2),
+                    'ema9': round(ema9, 2),
+                    'ema21': round(ema21, 2),
+                    'sma50': round(sma50, 2)
                 })
 
         sonuclar.append({
@@ -186,12 +189,15 @@ if degisen_hisseler:
         <h2 style="color: #1F4E78;">📊 BIST 100 Sinyal Değişimi</h2>
         <p><strong>Tarih:</strong> {datetime.now().strftime('%d.%m.%Y %H:%M')}</p>
         <hr>
-        <table style="border-collapse: collapse; width: 100%;">
+        <table style="border-collapse: collapse; width: 100%; font-size: 14px;">
             <tr style="background: #1F4E78; color: white;">
-                <th style="padding: 10px; border: 1px solid #ddd;">Hisse</th>
-                <th style="padding: 10px; border: 1px solid #ddd;">Fiyat</th>
-                <th style="padding: 10px; border: 1px solid #ddd;">Önceki Sinyal</th>
-                <th style="padding: 10px; border: 1px solid #ddd;">Yeni Sinyal</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">Hisse</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">Fiyat</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">EMA9</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">EMA21</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">SMA50</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">Önceki</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">Yeni Sinyal</th>
             </tr>
     """
     
@@ -206,10 +212,13 @@ if degisen_hisseler:
         yeni_renk = renkler.get(d['yeni'], "#F2F2F2")
         html += f"""
             <tr>
-                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">{d['hisse']}</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">₺{d['fiyat']}</td>
-                <td style="padding: 10px; border: 1px solid #ddd; background: {eski_renk};">{d['eski']}</td>
-                <td style="padding: 10px; border: 1px solid #ddd; background: {yeni_renk}; font-weight: bold;">{d['yeni']}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">{d['hisse']}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">₺{d['fiyat']}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">{d['ema9']}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">{d['ema21']}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">{d['sma50']}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; background: {eski_renk};">{d['eski']}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; background: {yeni_renk}; font-weight: bold;">{d['yeni']}</td>
             </tr>
         """
     
@@ -227,36 +236,79 @@ with open(JSON_DOSYA, 'w', encoding='utf-8') as f:
 print(f"💾 Yeni sinyaller kaydedildi: {JSON_DOSYA}")
 
 # ═══════════════════════════════════════════════════════════════
-# GÜNLÜK ÖZET E-POSTASI (Her çalışmada)
+# GÜNLÜK ÖZET E-POSTASI (Her çalışmada - TABLO HALİNDE)
 # ═══════════════════════════════════════════════════════════════
 if sonuclar:
     df_sonuc = pd.DataFrame(sonuclar)
     print("\n📊 ÖZET TABLO:")
     print(df_sonuc[['Hisse','Canli_Fiyat','EMA9','EMA21','SMA50','Sinyal']].to_string(index=False))
     
-    guclu_al = df_sonuc[df_sonuc['Sinyal'] == 'GÜÇLÜ AL'][['Hisse','Canli_Fiyat']].values.tolist()
-    guclu_sat = df_sonuc[df_sonuc['Sinyal'] == 'GÜÇLÜ SAT'][['Hisse','Canli_Fiyat']].values.tolist()
+    # Sinyal renkleri
+    sinyal_renk = {
+        "GÜÇLÜ AL": ("#C6EFCE", "#006100"),
+        "AL": ("#E2EFDA", "#375623"),
+        "GÜÇLÜ SAT": ("#FFC7CE", "#9C0006"),
+        "SAT": ("#FFEB9C", "#9C5700"),
+        "YUKARI": ("#FFF2CC", "#000000"),
+        "AŞAĞI": ("#FFF2CC", "#000000"),
+        "NÖTR": ("#F2F2F2", "#000000")
+    }
+    
+    # Önceki çalıştırmadan değişenler özeti (günlük mailin en üstüne)
+    degisim_ozeti = ""
+    if degisen_hisseler:
+        degisim_ozeti = f"""
+        <div style="background: #E7F3FF; border-left: 4px solid #1F4E78; padding: 12px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 8px 0; color: #1F4E78;">🔄 Son Çalıştırmadan Değişenler ({len(degisen_hisseler)})</h3>
+            <p style="margin: 0;">
+        """
+        for d in degisen_hisseler:
+            degisim_ozeti += f"<b>{d['hisse']}</b>: {d['eski']} → {d['yeni']} | "
+        degisim_ozeti += "</p></div>"
+    
+    # GÜÇLÜ AL tablosu
+    guclu_al_df = df_sonuc[df_sonuc['Sinyal'] == 'GÜÇLÜ AL'][['Hisse','Canli_Fiyat','EMA9','EMA21','SMA50','Sinyal']]
+    guclu_sat_df = df_sonuc[df_sonuc['Sinyal'] == 'GÜÇLÜ SAT'][['Hisse','Canli_Fiyat','EMA9','EMA21','SMA50','Sinyal']]
+    
+    def tablo_olustur(df, baslik, baslik_renk):
+        if df.empty:
+            return f"<h3 style='color:{baslik_renk};'>{baslik} (0)</h3><p>Hiç yok.</p>"
+        
+        html = f"<h3 style='color:{baslik_renk};'>{baslik} ({len(df)})</h3>"
+        html += """<table style="border-collapse: collapse; width: 100%; font-size: 13px; margin-bottom: 20px;">
+            <tr style="background: #1F4E78; color: white;">
+                <th style="padding: 6px; border: 1px solid #ddd;">Hisse</th>
+                <th style="padding: 6px; border: 1px solid #ddd;">Fiyat</th>
+                <th style="padding: 6px; border: 1px solid #ddd;">EMA9</th>
+                <th style="padding: 6px; border: 1px solid #ddd;">EMA21</th>
+                <th style="padding: 6px; border: 1px solid #ddd;">SMA50</th>
+                <th style="padding: 6px; border: 1px solid #ddd;">Sinyal</th>
+            </tr>"""
+        
+        for _, row in df.iterrows():
+            bg, fg = sinyal_renk.get(row['Sinyal'], ("#F2F2F2", "#000000"))
+            html += f"""
+            <tr style="background: {bg}; color: {fg};">
+                <td style="padding: 6px; border: 1px solid #ddd; font-weight: bold;">{row['Hisse']}</td>
+                <td style="padding: 6px; border: 1px solid #ddd;">₺{row['Canli_Fiyat']}</td>
+                <td style="padding: 6px; border: 1px solid #ddd;">{row['EMA9']}</td>
+                <td style="padding: 6px; border: 1px solid #ddd;">{row['EMA21']}</td>
+                <td style="padding: 6px; border: 1px solid #ddd;">{row['SMA50']}</td>
+                <td style="padding: 6px; border: 1px solid #ddd; font-weight: bold;">{row['Sinyal']}</td>
+            </tr>"""
+        html += "</table>"
+        return html
     
     html_ozet = f"""
     <html>
     <body style="font-family: Arial, sans-serif;">
         <h2 style="color: #1F4E78;">📈 BIST 100 Günlük Özet</h2>
-        <p>{datetime.now().strftime('%d.%m.%Y %H:%M')}</p>
+        <p><strong>{datetime.now().strftime('%d.%m.%Y %H:%M')}</strong></p>
+        {degisim_ozeti}
         <hr>
-        <h3 style="color: #006100;">🟢 GÜÇLÜ AL ({len(guclu_al)})</h3>
-        <ul>
+        {tablo_olustur(guclu_al_df, "🟢 GÜÇLÜ AL", "#006100")}
+        {tablo_olustur(guclu_sat_df, "🔴 GÜÇLÜ SAT", "#9C0006")}
+    </body></html>
     """
-    for h, fiyat in guclu_al:
-        html_ozet += f"<li><b>{h}</b> — ₺{fiyat}</li>"
-    
-    html_ozet += f"""
-        </ul>
-        <h3 style="color: #9C0006;">🔴 GÜÇLÜ SAT ({len(guclu_sat)})</h3>
-        <ul>
-    """
-    for h, fiyat in guclu_sat:
-        html_ozet += f"<li><b>{h}</b> — ₺{fiyat}</li>"
-    
-    html_ozet += "</ul></body></html>"
     
     email_gonder("📈 BIST 100 Günlük Özet", html_ozet)
