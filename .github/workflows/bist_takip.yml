@@ -2,16 +2,19 @@ name: BIST 100 Sinyal Takip
 
 on:
   schedule:
-    - cron: '30 9 * * *'
-    - cron: '0 10 * * *'
-    - cron: '0 11 * * *'
-    - cron: '0 12 * * *'
-    - cron: '0 13 * * *'
-    - cron: '0 14 * * *'
-    - cron: '0 15 * * *'
-    - cron: '0 16 * * *'
-    - cron: '0 17 * * *'
-    - cron: '0 18 * * *'
+    # 09:30 TRT
+    - cron: '30 6 * * 1-5'
+
+    # 10:00 TRT
+    - cron: '0 7 * * 1-5'
+
+    # 10:30 - 17:30 TRT (her yarım saatte)
+    - cron: '30 7-14 * * 1-5'
+    - cron: '0 8-15 * * 1-5'
+
+    # 18:30 TRT
+    - cron: '30 15 * * 1-5'
+
   workflow_dispatch:
 
 permissions:
@@ -20,34 +23,32 @@ permissions:
 jobs:
   takip:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Repo'yu çek
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Python kur
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Bağımlılıkları yükle
         run: pip install -r requirements.txt
-      
+
       - name: Sinyal takip scriptini çalıştır
         env:
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
         run: python bist_takip.py
-      
+
       - name: Sinyal kaydını commit et
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git fetch origin main
-          git checkout -B main origin/main
           git add onceki_sinyaller.json
-          git diff --cached --quiet || git commit -m "Sinyaller güncellendi: $(date +'%Y-%m-%d %H:%M')"
-          git push origin main
+          git diff --cached --quiet || git commit -m "Sinyaller güncellendi"
+          git push
