@@ -1,7 +1,7 @@
 {
   "AEFES": "NÖTR",
   "AGHOL": "GÜÇLÜ AL",
-  "AKBNK": "NÖTR",
+  "AKBNK": "SAT",
   "AKSA": "GÜÇLÜ SAT",
   "AKSEN": "GÜÇLÜ SAT",
   "ALARK": "GÜÇLÜ AL",
@@ -33,7 +33,7 @@
   "EUREN": "SAT",
   "FENER": "GÜÇLÜ SAT",
   "FROTO": "GÜÇLÜ SAT",
-  "GARAN": "SAT",
+  "GARAN": "GÜÇLÜ AL",
   "GENIL": "GÜÇLÜ SAT",
   "GESAN": "GÜÇLÜ SAT",
   "GUBRF": "SAT",
@@ -95,5 +95,5 @@
   "YKBNK": "SAT",
   "MERKO": "GÜÇLÜ SAT",
   "XU100": "GÜÇLÜ SAT",
-  "ZOREN": "GÜÇLÜ AL"
+  "ZOREN": "NÖTR"
 }
