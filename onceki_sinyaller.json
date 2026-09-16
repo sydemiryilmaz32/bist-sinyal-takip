@@ -6,7 +6,7 @@
   "AKSEN": "GÜÇLÜ SAT",
   "ALARK": "SAT",
   "ALBRK": "GÜÇLÜ SAT",
-  "ARCLK": "SAT",
+  "ARCLK": "GÜÇLÜ SAT",
   "ASELS": "GÜÇLÜ SAT",
   "ASTOR": "GÜÇLÜ SAT",
   "BERA": "GÜÇLÜ SAT",
@@ -90,10 +90,10 @@
   "TURSG": "GÜÇLÜ SAT",
   "ULKER": "GÜÇLÜ SAT",
   "VAKBN": "SAT",
-  "VESTL": "NÖTR",
+  "VESTL": "SAT",
   "YEOTK": "GÜÇLÜ SAT",
   "YKBNK": "GÜÇLÜ SAT",
   "MERKO": "GÜÇLÜ SAT",
   "XU100": "GÜÇLÜ SAT",
-  "ZOREN": "GÜÇLÜ AL"
+  "ZOREN": "NÖTR"
 }
