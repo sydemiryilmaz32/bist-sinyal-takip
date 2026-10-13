@@ -1,10 +1,10 @@
 {
-  "AEFES": "GÜÇLÜ AL",
+  "AEFES": "NÖTR",
   "AGHOL": "AL",
   "AKBNK": "NÖTR",
   "AKSA": "GÜÇLÜ SAT",
   "AKSEN": "GÜÇLÜ AL",
-  "ALARK": "NÖTR",
+  "ALARK": "GÜÇLÜ AL",
   "ALBRK": "NÖTR",
   "ARCLK": "GÜÇLÜ SAT",
   "ASELS": "NÖTR",
@@ -90,10 +90,10 @@
   "TURSG": "GÜÇLÜ SAT",
   "ULKER": "GÜÇLÜ SAT",
   "VAKBN": "GÜÇLÜ AL",
-  "VESTL": "NÖTR",
+  "VESTL": "GÜÇLÜ SAT",
   "YEOTK": "GÜÇLÜ SAT",
   "YKBNK": "GÜÇLÜ AL",
-  "MERKO": "GÜÇLÜ SAT",
+  "MERKO": "NÖTR",
   "XU100": "NÖTR",
   "ZOREN": "GÜÇLÜ SAT"
 }
